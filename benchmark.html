@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Benchmark Tests</title>
+    <style>
+        .error {
+            color: red;
+            padding: 10px;
+            border: 1px solid red;
+            margin: 10px 0;
+            background-color: #ffe6e6;
+        }
+        .connection-status {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .result-item {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>PHP Benchmark Tests</h1>
+    
+    <!-- Removed server URL input field -->
+    <div class="form-group">
+        <label for="testType">Test Type:</label>
+        <select id="testType">
+            <option value="math">Math Operations</option>
+            <option value="string">String Manipulation</option>
+            <option value="array">Array Processing</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="iterations">Iterations:</label>
+        <input type="number" id="iterations" placeholder="1000" min="1">
+    </div>
+
+    <div id="results"></div>
+
+    <button onclick="runBenchmark()">Run Benchmark</button>
+
+    <script>
+        const serverUrl = 'http://192.168.1.13/benchmark/index.php';  // Hardcoded server URL
+
+        async function testConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            
+            try {
+                const response = await fetch(serverUrl, { method: 'OPTIONS' });
+                if (response.ok) {
+                    statusDiv.className = 'connection-status connected';
+                    statusDiv.innerHTML = '✓ Connected to server successfully!';
+                } else {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+            } catch (error) {
+                statusDiv.className = 'connection-status disconnected';
+                statusDiv.innerHTML = `✗ Connection failed: ${error.message}`;
+            }
+        }
+
+        async function runBenchmark() {
+            const testType = document.getElementById('testType').value;
+            const iterations = parseInt(document.getElementById('iterations').value) || 1000;
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Running benchmark...</p>';
+            
+            try {
+                const response = await fetch(serverUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ testType, iterations })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                resultsDiv.innerHTML = `
+                    <div class="result-item">
+                        <h3>Test Results</h3>
+                        <p>Execution Time: ${data.executionTime} seconds</p>
+                        <p>Iterations: ${data.iterations}</p>
+                        <p>Output Hash: ${data.resultHash}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Automatically test connection on page load (optional)
+        window.onload = testConnection;
+    </script>
+</body>
+</html>
