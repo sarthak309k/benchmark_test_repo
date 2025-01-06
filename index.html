@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Benchmark Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        select, input {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 14px;
+            width: 100%;
+        }
+        #results {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Benchmark Tool</h1>
+        <p>Select an operation and set iterations to test processing time:</p>
+        <form id="benchmarkForm">
+            <label for="operation">Operation:</label>
+            <select id="operation" name="operation">
+                <option value="fibonacci">Fibonacci Calculation</option>
+                <option value="prime_check">Prime Number Check</option>
+                <option value="loop">Simple Loop</option>
+            </select>
+
+            <label for="iterations">Iterations:</label>
+            <input type="number" id="iterations" name="iterations" min="1" max="1000000" value="1000" required>
+
+            <button type="button" onclick="runBenchmark()">Run Benchmark</button>
+        </form>
+        <div id="results"></div>
+    </div>
+    <script>
+        function runBenchmark() {
+            const form = document.getElementById('benchmarkForm');
+            const operation = form.operation.value;
+            const iterations = form.iterations.value;
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.textContent = 'Running benchmark...';
+
+            const startTime = performance.now();
+
+            fetch('network_benchmark.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ operation, iterations }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const endTime = performance.now();
+                    const rtt = (endTime - startTime).toFixed(2);
+
+                    resultsDiv.innerHTML = `
+                        <h3>Benchmark Results:</h3>
+                        <p>Operation: ${data.operation}</p>
+                        <p>Iterations: ${data.iterations}</p>
+                        <p>Server Processing Time: ${data.processing_time} ms</p>
+                        <p>Client-Server Round-Trip Time (RTT): ${rtt} ms</p>
+                    `;
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html>
