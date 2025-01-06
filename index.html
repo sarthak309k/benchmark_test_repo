@@ -1,101 +1,114 @@
+<?php
+// Start timing the server-side processing
+$start_time = microtime(true);
+
+header('Content-Type: application/json');
+
+try {
+    // Read the incoming POST data
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    // Check if the 'number' parameter is set
+    if (!isset($input['number']) || !is_numeric($input['number']) || $input['number'] < 0) {
+        throw new Exception('Invalid input: Please provide a non-negative number.');
+    }
+
+    // Extract the number from the input
+    $number = (int)$input['number'];
+
+    // Calculate the factorial
+    function factorial($n) {
+        if ($n === 0 || $n === 1) return 1;
+        return $n * factorial($n - 1);
+    }
+
+    $factorial = factorial($number);
+
+    // End timing the server-side processing
+    $end_time = microtime(true);
+    $processing_time = round($end_time - $start_time, 4); // Processing time in seconds
+
+    // Send response
+    echo json_encode([
+        'number' => $number,
+        'factorial' => $factorial,
+        'processingTime' => $processing_time,
+    ]);
+} catch (Exception $e) {
+    // Handle errors and send error response
+    echo json_encode([
+        'error' => true,
+        'message' => $e->getMessage(),
+    ]);
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Benchmark Tool</title>
+    <title>Network Benchmark</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             background-color: #f4f4f4;
-            text-align: center;
         }
         .container {
             max-width: 600px;
-            margin: 100px auto;
-            padding: 20px;
+            margin: auto;
             background: #fff;
+            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        select, input, button {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
             background-color: #007bff;
             color: white;
-            border-radius: 5px;
+            border: none;
             cursor: pointer;
         }
         button:hover {
             background-color: #0056b3;
         }
-        select, input {
-            margin: 10px 0;
-            padding: 10px;
-            font-size: 14px;
-            width: 100%;
-        }
-        #results {
+        .result {
             margin-top: 20px;
-            font-size: 14px;
+            padding: 10px;
+            background: #e7f3ff;
+            border: 1px solid #007bff;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Advanced Benchmark Tool</h1>
-        <p>Select an operation and set iterations to test processing time:</p>
-        <form id="benchmarkForm">
-            <label for="operation">Operation:</label>
-            <select id="operation" name="operation">
-                <option value="fibonacci">Fibonacci Calculation</option>
-                <option value="prime_check">Prime Number Check</option>
-                <option value="loop">Simple Loop</option>
+        <h1>Network Benchmark</h1>
+        <form action="benchmark.php" method="POST">
+            <label for="task">Choose a benchmark task:</label>
+            <select name="task" id="task" required>
+                <option value="loop">Loop Benchmark</option>
+                <option value="sorting">Sorting Benchmark</option>
+                <option value="matrix">Matrix Multiplication</option>
             </select>
-
-            <label for="iterations">Iterations:</label>
-            <input type="number" id="iterations" name="iterations" min="1" max="1000000" value="1000" required>
-
-            <button type="button" onclick="runBenchmark()">Run Benchmark</button>
+            <label for="iterations">Number of Iterations (if applicable):</label>
+            <input type="number" name="iterations" id="iterations" min="1" required>
+            <button type="submit">Run Benchmark</button>
         </form>
-        <div id="results"></div>
     </div>
-    <script>
-        function runBenchmark() {
-            const form = document.getElementById('benchmarkForm');
-            const operation = form.operation.value;
-            const iterations = form.iterations.value;
-            const resultsDiv = document.getElementById('results');
-            
-            resultsDiv.textContent = 'Running benchmark...';
-
-            const startTime = performance.now();
-
-            fetch('network_benchmark.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ operation, iterations }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    const endTime = performance.now();
-                    const rtt = (endTime - startTime).toFixed(2);
-
-                    resultsDiv.innerHTML = `
-                        <h3>Benchmark Results:</h3>
-                        <p>Operation: ${data.operation}</p>
-                        <p>Iterations: ${data.iterations}</p>
-                        <p>Server Processing Time: ${data.processing_time} ms</p>
-                        <p>Client-Server Round-Trip Time (RTT): ${rtt} ms</p>
-                    `;
-                })
-                .catch(error => {
-                    resultsDiv.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
-                });
-        }
-    </script>
 </body>
 </html>
